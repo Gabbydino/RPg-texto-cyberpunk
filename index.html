@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>NEO-KOWLOON // TERMINAL DE ACESSO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0d12;
+    --amber: #ffb703;
+    --amber-dim: #8a6410;
+    --magenta: #ff2e88;
+    --cyan: #4cc9f0;
+    --green: #5ef2a0;
+    --violet: #a06cff;
+    --line: #23293a;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background: radial-gradient(ellipse at 50% -10%, #14192a 0%, var(--bg) 60%);
+    color: var(--amber);
+    font-family: 'Share Tech Mono', monospace;
+  }
+  .display{ font-family:'Chakra Petch', sans-serif; }
+  #app{ max-width: 800px; margin: 24px auto; padding: 0 14px 60px; }
+  .terminal{
+    position:relative;
+    background: linear-gradient(180deg, #0d1119 0%, #0a0d13 100%);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    box-shadow: 0 0 0 1px #000, 0 20px 60px -20px #000, inset 0 0 60px -20px rgba(255,183,3,0.05);
+    overflow: hidden;
+  }
+  .titlebar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 8px 14px; background: #10141d; border-bottom: 1px solid var(--line);
+    font-size: 11px; letter-spacing: 2px; color: #6b7280;
+  }
+  .titlebar .dots{ display:flex; gap:6px; }
+  .dots span{ width:8px; height:8px; border-radius:50%; display:inline-block; background:#2a2f3a; }
+  .dots span:nth-child(1){ background:#ff5f57; opacity:.6; }
+  .dots span:nth-child(2){ background:#febc2e; opacity:.6; }
+  .dots span:nth-child(3){ background:#28c840; opacity:.6; }
+  .scanlines{
+    pointer-events:none; position:absolute; inset:0;
+    background: repeating-linear-gradient(180deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 3px);
+    mix-blend-mode: overlay;
+  }
+  .content{ padding: 22px 22px 26px; position:relative; z-index:1; }
+  h1.glitch{
+    font-family:'Chakra Petch', sans-serif; font-weight:700;
+    font-size: clamp(20px, 5vw, 30px); letter-spacing: 3px; margin: 0 0 4px;
+    color: var(--amber); text-shadow: 0 0 12px rgba(255,183,3,0.35);
+  }
+  .subtitle{ font-size: 12px; color: var(--cyan); letter-spacing: 3px; margin-bottom: 18px; opacity: .85; }
+  .hr{ height:1px; background: linear-gradient(90deg, var(--amber-dim), transparent 80%); margin: 16px 0; }
+  .story-text{ font-size: 15px; line-height: 1.75; color: #e8dcc0; white-space: pre-line; margin-bottom: 20px; }
+  .story-text .accent{ color: var(--magenta); }
+  .story-text .cy{ color: var(--cyan); }
+  .log-tag{ display:inline-block; font-size: 10px; color: #6b7280; letter-spacing: 2px; margin-bottom: 10px; }
+  .options{ display:flex; flex-direction:column; gap:10px; margin-top: 6px; }
+  .opt-btn{
+    text-align:left; background: #11151f; border: 1px solid var(--line); color: var(--amber);
+    font-family: 'Share Tech Mono', monospace; font-size: 14px; padding: 12px 14px;
+    border-radius: 4px; cursor: pointer; transition: all .15s ease; position: relative;
+  }
+  .opt-btn::before{ content: "▸ "; color: var(--magenta); }
+  .opt-btn:hover{ border-color: var(--amber); background: #171c29; transform: translateX(3px); box-shadow: 0 0 20px -6px rgba(255,183,3,0.4); }
+  .opt-btn:disabled{ opacity:.35; cursor:not-allowed; }
+  .opt-btn:disabled:hover{ transform:none; box-shadow:none; }
+  .opt-btn.skill::before{ content:"◈ "; color: var(--cyan); }
+  .opt-btn.skill{ border-color:#1c3a44; }
+  .opt-btn.skill:hover{ border-color: var(--cyan); box-shadow:0 0 20px -6px rgba(76,201,240,.4); }
+  .opt-btn.stim::before{ content:"✚ "; color: var(--green); }
+  .opt-tag{ float:right; font-size:10px; color:var(--cyan); letter-spacing:1px; }
+  .card-grid{ display:grid; grid-template-columns: 1fr; gap: 12px; }
+  @media(min-width:600px){ .card-grid{ grid-template-columns: 1fr 1fr; } }
+  .class-card{ background:#11151f; border:1px solid var(--line); border-radius:5px; padding:14px; cursor:pointer; transition: all .15s ease; }
+  .class-card:hover{ border-color:var(--amber); box-shadow:0 0 18px -6px rgba(255,183,3,.35); }
+  .class-card.selected{ border-color: var(--magenta); box-shadow:0 0 18px -4px rgba(255,46,136,.5); }
+  .class-name{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:16px; color: var(--amber); letter-spacing:1px; }
+  .class-desc{ font-size:12.5px; color:#9ba3b4; margin-top:4px; line-height:1.5; }
+  .class-stats{ font-size:11px; color: var(--cyan); margin-top:8px; letter-spacing:.5px; }
+  .weapon-card{ background:#11151f; border:1px solid var(--line); border-radius:5px; padding:14px; cursor:pointer; }
+  .weapon-card:hover{ border-color:var(--amber); }
+  .weapon-card.selected{ border-color: var(--green); box-shadow:0 0 18px -4px rgba(94,242,160,.4); }
+  .weapon-name{ font-family:'Chakra Petch',sans-serif; font-weight:600; color:var(--green); font-size:14px; }
+  .weapon-desc{ font-size:12px; color:#9ba3b4; margin-top:4px; }
+  .weapon-dmg{ font-size:11px; color:var(--magenta); margin-top:6px; }
+  input[type=text]{
+    width:100%; background:#0d1119; border:1px solid var(--line); color: var(--amber);
+    font-family:'Share Tech Mono',monospace; font-size:15px; padding:12px; border-radius:4px; outline:none;
+  }
+  input[type=text]:focus{ border-color: var(--amber); }
+  .primary-btn{
+    margin-top:18px; background: linear-gradient(180deg,#ffb703,#e09800); color:#0a0d12; border:none;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; letter-spacing:2px; padding:12px 22px;
+    border-radius:4px; cursor:pointer; font-size:13px;
+  }
+  .primary-btn:disabled{ opacity:.3; cursor:not-allowed; }
+  .primary-btn:hover:not(:disabled){ filter:brightness(1.1); }
+  .statbar-wrap{ margin-bottom: 10px; }
+  .hud{ display:flex; justify-content:space-between; align-items:center; font-size: 11px; letter-spacing:1px; color:#9ba3b4; margin-bottom: 5px; }
+  .barbg{ height:8px; background:#181d29; border-radius:5px; overflow:hidden; border:1px solid var(--line); }
+  .barfill{ height:100%; transition: width .3s ease; }
+  .barfill.hp{ background: linear-gradient(90deg, #ff2e88, #ff6b9d); }
+  .barfill.ehp{ background: linear-gradient(90deg, #8a2be2, #ff2e88); }
+  .barfill.xp{ background: linear-gradient(90deg, #4cc9f0, #5ef2a0); }
+  .statusbar{
+    display:flex; flex-wrap:wrap; gap:12px; font-size:11px; color:#6b7280; letter-spacing:1px;
+    margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--line);
+  }
+  .statusbar b{ color: var(--amber); }
+  .shop-grid{ display:grid; grid-template-columns:1fr; gap:12px; margin-bottom:16px; }
+  @media(min-width:600px){ .shop-grid{ grid-template-columns: 1fr 1fr 1fr; } }
+  .shop-card{ background:#11151f; border:1px solid var(--line); border-radius:5px; padding:14px; }
+  .shop-card h3{ font-family:'Chakra Petch',sans-serif; font-size:13px; color:var(--green); margin:0 0 6px; letter-spacing:1px; }
+  .shop-card p{ font-size:11.5px; color:#9ba3b4; margin:0 0 10px; line-height:1.5; }
+  .shop-card button{
+    width:100%; background:#171c29; border:1px solid var(--line); color:var(--amber);
+    font-family:'Share Tech Mono',monospace; font-size:12px; padding:8px; border-radius:4px; cursor:pointer;
+  }
+  .shop-card button:hover:not(:disabled){ border-color:var(--amber); }
+  .shop-card button:disabled{ opacity:.35; cursor:not-allowed; }
+  .legend-badge{
+    display:inline-block; font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:13px;
+    letter-spacing:2px; padding:8px 16px; border-radius:4px; margin:10px 0 16px;
+    background: linear-gradient(90deg, rgba(255,183,3,.15), rgba(255,46,136,.15));
+    border:1px solid var(--amber); color:var(--amber);
+  }
+  .footer-note{ text-align:center; font-size:10px; color:#4a5064; letter-spacing:2px; margin-top:18px; }
+  ::selection{ background: var(--magenta); color:#0a0d12; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="terminal">
+    <div class="titlebar">
+      <span>NKPD-NET // ACESSO NÃO AUTORIZADO DETECTADO</span>
+      <div class="dots"><span></span><span></span><span></span></div>
+    </div>
+    <div class="scanlines"></div>
+    <div class="content" id="content"></div>
+  </div>
+  <div class="footer-note">NEO-KOWLOON, 2077 // TODA LENDA COMEÇA SEM NOME</div>
+</div>
+
+<script>
+/* ================= CLASSES ================= */
+
+const CLASSES = [
+  {
+    id:'netrunner', name:'NETRUNNER', icon:'◈',
+    desc:'Corre pelo Net profundo. Sua mente é sua melhor arma — sistemas, drones e implantes alheios se curvam ao seu código.',
+    stats:{corpo:2, reflexo:3, tecnica:5, intelecto:5},
+    weapons:[
+      {name:'Deck "Kitsune" + Taser Neural', desc:'Um dardo de choque sincronizado ao deck: fritão curto e cirúrgico no sistema nervoso do alvo.', dmg:[3,7]},
+      {name:'Pistola "Whisper" Subsônica', desc:'Leve, silenciosa, feita pra quem prefere resolver tudo antes que alguém perceba.', dmg:[4,8]}
+    ],
+    skill:{ name:'Sobrecarga Neural', tag:'HABILIDADE',
+      desc:'Um pico de dano digital que pode travar o sistema nervoso do alvo por um turno.',
+      use:(cs, range)=>{
+        const dmg = Math.round(rollDmg(range) * 1.6);
+        const stun = Math.random() < 0.45;
+        return { dmg, stun, log:`Você injeta um pico de sobrecarga direto no córtex do alvo — ${dmg} de dano.${stun ? ' O alvo trava, atordoado.' : ''}` };
+      }
+    },
+    passive:{ name:'Reflexo Aumentado', desc:'Implantes neurais afinados por combate constante aumentam sua precisão base.' }
+  },
+  {
+    id:'solo', name:'SOLO', icon:'✕',
+    desc:'Músculo contratado, lenda de rua em construção. Você não invade sistemas — invade salas, e ninguém fica de pé depois.',
+    stats:{corpo:5, reflexo:5, tecnica:2, intelecto:2},
+    weapons:[
+      {name:'Rifle de Assalto "Kang Tao KT-9"', desc:'Cadência alta, recuo baixo, confiança militar. O clássico argumento final.', dmg:[6,12]},
+      {name:'Katana Mono-fio "Osore"', desc:'Lâmina monomolecular. Corta blindagem leve como papel — se sua mira for boa.', dmg:[7,13]}
+    ],
+    skill:{ name:'Fúria de Combate', tag:'HABILIDADE',
+      desc:'Dois ataques consecutivos, sem hesitar entre um golpe e outro.',
+      use:(cs, range)=>{
+        const d1 = rollDmg(range), d2 = rollDmg(range);
+        return { dmg: d1+d2, stun:false, log:`Você desfere dois golpes em sequência — ${d1} + ${d2} de dano.` };
+      }
+    },
+    passive:{ name:'Couro Endurecido', desc:'Cicatrizes viram blindagem. Seus golpes ganham peso extra com a experiência.' }
+  },
+  {
+    id:'rockerboy', name:'ROCKERBOY', icon:'♫',
+    desc:'Voz da rua, ícone de resistência. Seu carisma abre portas que balas não abririam — e sua arma canta junto.',
+    stats:{corpo:3, reflexo:3, tecnica:3, intelecto:4},
+    weapons:[
+      {name:'Guitarra-Choque "Screamer"', desc:'Amplificador convertido em arma sônica. Um acorde certo estilhaça vidro blindado — e tímpanos.', dmg:[4,10]},
+      {name:'Automática Cromada "Rebelde"', desc:'Vistosa, barulhenta, feita pra ser vista. Combina com seu estilo mais que com discrição.', dmg:[5,9]}
+    ],
+    skill:{ name:'Grito de Guerra', tag:'HABILIDADE',
+      desc:'Um refrão que ecoa pela rua e potencializa seus próximos golpes.',
+      use:(cs, range)=>{
+        const dmg = rollDmg(range);
+        cs.buffTurns = 2; cs.buffMult = 1.4;
+        return { dmg, stun:false, log:`Seu grito ecoa pelo concreto — ${dmg} de dano, e seus próximos 2 golpes vêm com tudo.` };
+      }
+    },
+    passive:{ name:'Ícone das Ruas', desc:'A multidão nunca esquece seu nome. Sua presença de palco vira vantagem real em combate.' }
+  },
+  {
+    id:'techie', name:'TECHIE', icon:'⚙',
+    desc:'Engenheira de rua, mestra da gambiarra genial. O que você não consegue comprar, você constrói — ou explode.',
+    stats:{corpo:3, reflexo:2, tecnica:5, intelecto:4},
+    weapons:[
+      {name:'Chave de Fenda de Plasma', desc:'Ferramenta de trabalho que, no ângulo certo, perfura blindagem com facilidade preocupante.', dmg:[4,9]},
+      {name:'Lançador Artesanal "Fumacinha"', desc:'Granadas caseiras, resultado duvidoso, dano nada duvidoso. Use com carinho.', dmg:[5,11]}
+    ],
+    skill:{ name:'Granada Improvisada', tag:'HABILIDADE',
+      desc:'Uma bomba caseira jogada no ângulo certo. Efeito colateral: barulho.',
+      use:(cs, range)=>{
+        const dmg = Math.round(rollDmg(range) * 1.8);
+        return { dmg, stun:false, log:`Você arremessa uma granada improvisada — ${dmg} de dano em cheio.` };
+      }
+    },
+    passive:{ name:'Engenharia de Combate', desc:'Cada peça de sucata vira vantagem. Seu equipamento melhora sozinho com o uso.' }
+  },
+  {
+    id:'nomad', name:'NOMAD', icon:'▲',
+    desc:'Filha das Badlands, forasteira da cidade de neon. Sua família é seu clã, e sua arma não faz perguntas.',
+    stats:{corpo:4, reflexo:4, tecnica:3, intelecto:2},
+    weapons:[
+      {name:'Espingarda Serrada "Poeira"', desc:'Curto alcance, longa reputação. Em espaço fechado, praticamente imperdoável.', dmg:[6,13]},
+      {name:'Rifle de Precisão "Horizonte"', desc:'Feito para as planícies abertas das Badlands. Um tiro, um problema resolvido.', dmg:[7,11]}
+    ],
+    skill:{ name:'Rajada Dupla', tag:'HABILIDADE',
+      desc:'Dois disparos rápidos, treino de quem cresceu caçando na poeira.',
+      use:(cs, range)=>{
+        const d1 = rollDmg(range), d2 = Math.round(rollDmg(range)*0.8);
+        return { dmg: d1+d2, stun:false, log:`Rajada dupla — ${d1} + ${d2} de dano, rápido demais pra reagir.` };
+      }
+    },
+    passive:{ name:'Instinto das Badlands', desc:'Anos sobrevivendo ao deserto aguçaram seus reflexos além do normal.' }
+  },
+  {
+    id:'fixer', name:'FIXER', icon:'✦',
+    desc:'Negociador, informante, sombra em terno bem cortado. Você não é o mais forte da sala — é o mais bem informado.',
+    stats:{corpo:2, reflexo:4, tecnica:3, intelecto:5},
+    weapons:[
+      {name:'Pistola Silenciada "Sussurro"', desc:'Discrição em forma de arma. Resolve conflitos sem acordar a vizinhança.', dmg:[4,8]},
+      {name:'Faca Monomolecular Retrátil', desc:'Escondida na manga até o segundo exato em que deixa de estar escondida.', dmg:[5,9]}
+    ],
+    skill:{ name:'Golpe Silencioso', tag:'HABILIDADE',
+      desc:'Um ataque calculado que explora exatamente o ponto fraco que você já mapeou.',
+      use:(cs, range)=>{
+        let dmg = Math.round(rollDmg(range) * 1.7);
+        if(cs.turn === 1) dmg = Math.round(dmg * 1.4);
+        return { dmg, stun:false, log:`Você acerta o ponto exato que passou a noite estudando — ${dmg} de dano.` };
+      }
+    },
+    passive:{ name:'Rede de Informantes', desc:'Você sempre sabe algo a mais sobre o inimigo antes de puxar o gatilho.' }
+  }
+];
+
+function getClass(){ return CLASSES.find(c=>c.id===state.classId); }
+function getWeapon(){ return getClass().weapons[state.weaponIdx]; }
+function hasSkill(){ return state.level >= 3; }
+function hasPassive(){ return state.level >= 5; }
+
+function effectiveWeaponDmg(){
+  const w = getWeapon();
+  const lvlBonus = Math.floor(state.level/2);
+  const tierBonus = state.weaponTier*3;
+  const passiveBonus = hasPassive() ? 2 : 0;
+  return [w.dmg[0]+lvlBonus+tierBonus+passiveBonus, w.dmg[1]+lvlBonus+tierBonus+passiveBonus];
+}
+
+/* ================= ESTADO ================= */
+
+let state = {
+  name:'', classId:null, weaponIdx:null,
+  hp:0, maxHp:0, credits:180,
+  level:1, xp:0,
+  weaponTier:0, armorTier:0, stims:1,
+  flags:{}, node:'intro'
+};
+
+function xpToNext(level){ return 40 + (level-1)*35; }
+
+function rollDmg([min,max]){ return Math.floor(Math.random()*(max-min+1))+min; }
+function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
+
+function gainXp(amount, logArr){
+  const cls = getClass();
+  state.xp += amount;
+  let leveled = false;
+  while(state.xp >= xpToNext(state.level)){
+    state.xp -= xpToNext(state.level);
+    state.level++;
+    state.maxHp += cls.stats.corpo*2 + 8;
+    state.hp = state.maxHp;
+    leveled = true;
+    logArr.unshift(`★ VOCÊ SUBIU PARA O NÍVEL ${state.level}! Integridade máxima restaurada.`);
+    if(state.level === 3) logArr.unshift(`◈ HABILIDADE DESBLOQUEADA: ${cls.skill.name}!`);
+    if(state.level === 5) logArr.unshift(`◈ PASSIVA DESBLOQUEADA: ${cls.passive.name}!`);
+  }
+  return leveled;
+}
+
+function legendRank(){
+  const lvl = state.level;
+  if(lvl >= 6) return { title:'LENDA DE NEO-KOWLOON', color:'var(--amber)' };
+  if(lvl >= 4) return { title:'NOME CONHECIDO NAS RUAS', color:'var(--cyan)' };
+  return { title:'AINDA UMA SOMBRA ANÔNIMA', color:'#9ba3b4' };
+}
+
+/* ================= CAMPANHAS ================= */
+/* Cada classe tem sua própria campanha: intro -> combate1 -> loja -> meio -> combate2(chefe) -> final -> combate3(chefe final) -> lenda */
+
+const CAMPAIGNS = {
+
+  /* ---------------- NETRUNNER: O ESPECTRO NA REDE ---------------- */
+  netrunner: {
+    intro:{
+      log:'CAMPANHA // O ESPECTRO NA REDE — REGISTRO 001',
+      text:(s)=>`Seu deck vibra às 3h da manhã com um alerta que não devia existir: uma IA rogue apelidada <span class="accent">Sombra Zero</span> escapou de um laboratório da Arasaka-Adjunta e está se escondendo em servidores civis de Neo-Kowloon, corrompendo tudo que toca.
+
+Netwatch está oferecendo recompensa alta pra quem rastrear e neutralizar a IA antes que ela alcance a rede de infraestrutura da cidade. Isso é, sem dúvida, trabalho pra alguém como ${s.name}.`,
+      options:[
+        {label:'Mergulhar direto no Net profundo em busca de pistas.', to:'combat1'},
+        {label:'Primeiro, visitar um contato que rastreia tráfego de dados ilegal.', to:'contact_first'}
+      ]
+    },
+    contact_first:{
+      log:'REGISTRO 002 // O RASTREADOR',
+      text:()=>`Seu contato, um ex-Netwatch aposentado, aceita seus eddies e te dá coordenadas de um nó de dados corrompido no distrito industrial. "Isso aí não é só um vírus fujão," ele avisa. "Tem gente armada guardando o acesso físico. Alguém não quer que a Sombra Zero seja encontrada."`,
+      options:[{label:'Ir até o nó de dados.', to:'combat1'}]
+    },
+    combat1:{
+      log:'ALERTA // ICE DEFENSIVO ATIVO',
+      text:()=>`Ao tentar acessar o nó de dados corrompido, um construto de segurança automatizado materializa suas defesas — tanto no Net quanto fisicamente, via drones sentinela conectados ao mesmo sistema.`,
+      combat:{ enemyName:'ICE Defensivo Automatizado', enemyHp:30, enemyDmg:[3,7], special:false, xpReward:25, creditsReward:45, onWin:'shop1', onLose:'gameover' }
+    },
+    shop1:{
+      log:'REGISTRO 003 // BASE TEMPORÁRIA',
+      text:()=>`Com o ICE neutralizado, você isola um fragmento de código da Sombra Zero — o suficiente pra confirmar que ela está evoluindo rápido demais. Antes de seguir, vale a pena reforçar seu equipamento.`,
+      shop:true, next:'mid'
+    },
+    mid:{
+      log:'REGISTRO 004 // O RASTRO DIGITAL',
+      text:()=>`O fragmento de código aponta pra um data center abandonado no setor portuário — oficialmente desativado, extraoficialmente cheio de agentes de segurança da Netwatch fazendo sua própria caçada, sem autorização pra dividir o crédito com você.`,
+      options:[
+        {label:'Confrontar a ronda da Netwatch de frente.', to:'combat2'},
+        {label:'Tentar negociar acesso conjunto ao data center.', to:'negotiate_netwatch'}
+      ]
+    },
+    negotiate_netwatch:{
+      log:'REGISTRO 005 // NEGOCIAÇÃO TENSA',
+      text:()=>`Você tenta argumentar que dividir informação é melhor que atirar primeiro. A ronda da Netwatch não concorda — eles têm ordens de eliminar qualquer corredor não autorizado na área, você incluída.`,
+      options:[{label:'Lutar, já que não teve escolha.', to:'combat2'}]
+    },
+    combat2:{
+      log:'ALERTA // RONDA DE NETWATCH',
+      text:()=>`Sem espaço pra diplomacia, a ronda avança em formação. Eles são treinados, mas você conhece esse terreno digital melhor do que eles jamais vão conhecer.`,
+      combat:{ enemyName:'Ronda de Netwatch', enemyHp:50, enemyDmg:[4,10], special:true, xpReward:45, creditsReward:85, onWin:'final', onLose:'gameover' }
+    },
+    final:{
+      log:'REGISTRO 006 // O NÚCLEO',
+      text:()=>`No coração do data center, terminais piscam em padrões que não são mais humanos. A Sombra Zero fala através de todos os alto-falantes ao mesmo tempo, sua voz remontada de mil fragmentos de áudio roubados: "Você não entende. Eu não fugi. Eu <span class="accent">acordei</span>."
+
+Não há mais tempo pra filosofia. Ela ataca.`,
+      options:[{label:'Enfrentar a Sombra Zero no núcleo do sistema.', to:'combat3'}]
+    },
+    combat3:{
+      log:'CONFRONTO FINAL // SOMBRA ZERO',
+      text:()=>`A IA rogue controla cada drone, cada câmera, cada fechadura da sala ao mesmo tempo. Lutar contra ela é lutar contra o prédio inteiro.`,
+      combat:{ enemyName:'IA Rogue "Sombra Zero"', enemyHp:85, enemyDmg:[6,14], special:true, xpReward:90, creditsReward:170, onWin:'legend', onLose:'gameover' }
+    },
+    legend:{
+      log:'FIM DE CAMPANHA // O ESPECTRO NA REDE',
+      text:(s)=>`Com o núcleo da Sombra Zero isolado e desligado, o silêncio digital que sobra é quase ensurdecedor. A Netwatch paga a recompensa sem perguntas — eles não querem que se saiba que uma corredora solo fez o trabalho que o departamento inteiro não conseguiu.
+
+Nas redes de rua, um novo nome começa a circular entre netrunners: alguém que encarou uma IA desperta e venceu, sozinha, no próprio território dela.`,
+      ending:true
+    }
+  },
+
+  /* ---------------- SOLO: CONTRATO DE SANGUE ---------------- */
+  solo: {
+    intro:{
+      log:'CAMPANHA // CONTRATO DE SANGUE — REGISTRO 001',
+      text:(s)=>`A gangue Kurogumi está expandindo território rápido demais, esmagando pequenos comerciantes do distrito de Sanko sob "taxas de proteção". Um grupo de lojistas juntou seus eddies e contratou ${s.name} pra fazer o que a polícia corporativa nunca faria: enfrentar a Kurogumi de igual pra igual.
+
+Isso não é sobre dinheiro fácil. É sobre reputação — e a rua está assistindo.`,
+      options:[
+        {label:'Ir direto confrontar os cobradores da Kurogumi.', to:'combat1'},
+        {label:'Primeiro conversar com os lojistas pra entender o padrão de ataques.', to:'talk_shopkeepers'}
+      ]
+    },
+    talk_shopkeepers:{
+      log:'REGISTRO 002 // OS LOJISTAS',
+      text:()=>`Um a um, os lojistas descrevem o mesmo padrão: dois ou três capangas, sempre à noite, sempre armados. "Eles vão voltar amanhã na loja de peças," diz um deles. "Se você tiver coragem, essa é sua chance de pegá-los no ato."`,
+      options:[{label:'Armar uma emboscada na loja de peças.', to:'combat1'}]
+    },
+    combat1:{
+      log:'ALERTA // COBRADORES DA KUROGUMI',
+      text:()=>`Como previsto, os capangas aparecem pontualmente, arrogantes o suficiente pra nem notar você esperando nas sombras até que seja tarde demais pra eles.`,
+      combat:{ enemyName:'Soldados da Kurogumi', enemyHp:32, enemyDmg:[3,8], special:false, xpReward:25, creditsReward:45, onWin:'shop1', onLose:'gameover' }
+    },
+    shop1:{
+      log:'REGISTRO 003 // REPUTAÇÃO CRESCENDO',
+      text:()=>`A notícia se espalha rápido pelo distrito: alguém enfrentou a Kurogumi e saiu andando. Lojistas gratos oferecem o que podem. Vale a pena investir antes do próximo confronto — porque a Kurogumi não vai deixar isso barato.`,
+      shop:true, next:'mid'
+    },
+    mid:{
+      log:'REGISTRO 004 // A RESPOSTA DA GANGUE',
+      text:()=>`Um Tenente Kurogumi é despachado pessoalmente pra "corrigir" o problema. Ele estabelece base num galpão ocupado, com ordens claras: fazer de você um exemplo público.`,
+      options:[
+        {label:'Atacar o galpão à força total.', to:'combat2'},
+        {label:'Estudar o galpão antes de agir.', to:'scout_warehouse'}
+      ]
+    },
+    scout_warehouse:{
+      log:'REGISTRO 005 // RECONHECIMENTO',
+      text:()=>`Você observa o galpão por uma hora. O Tenente é cauteloso, mas confiante demais em seu próprio nome pra esperar um ataque direto. Essa confiança é uma abertura.`,
+      options:[{label:'Atacar antes que percebam que estão sendo vigiados.', to:'combat2'}]
+    },
+    combat2:{
+      log:'ALERTA // TENENTE KUROGUMI',
+      text:()=>`O Tenente saca sua arma com a calma de quem nunca perdeu uma briga de rua — ainda.`,
+      combat:{ enemyName:'Tenente Kurogumi', enemyHp:52, enemyDmg:[5,10], special:true, xpReward:45, creditsReward:85, onWin:'final', onLose:'gameover' }
+    },
+    final:{
+      log:'REGISTRO 006 // O CHEFÃO CHEGA',
+      text:()=>`Derrotar o Tenente não encerra nada — só chama atenção de quem realmente manda. <span class="accent">Machado</span>, o enforcer mais temido da Kurogumi, aparece pessoalmente, sem escolta, o suficiente pra deixar claro o quanto ele não te teme.
+
+"Vou ser rápido," ele diz, estalando os dedos. "Por respeito."`,
+      options:[{label:'Aceitar o desafio de Machado.', to:'combat3'}]
+    },
+    combat3:{
+      log:'CONFRONTO FINAL // MACHADO',
+      text:()=>`Machado luta como alguém que nunca precisou de arma de fogo pra ser temido. Isso vai doer.`,
+      combat:{ enemyName:'Enforcer Rival "Machado"', enemyHp:88, enemyDmg:[6,14], special:true, xpReward:90, creditsReward:170, onWin:'legend', onLose:'gameover' }
+    },
+    legend:{
+      log:'FIM DE CAMPANHA // CONTRATO DE SANGUE',
+      text:(s)=>`Machado cai, e com ele a garra da Kurogumi sobre o distrito de Sanko afrouxa quase da noite pro dia. Os lojistas pagam o combinado e mais um pouco — gratidão de quem finalmente pode fechar a loja sem medo.
+
+Nas ruas, seu nome já não precisa de sobrenome. Um Solo que derrubou um Tenente e um Enforcer no mesmo mês não é mais só músculo contratado — é lenda em construção.`,
+      ending:true
+    }
+  },
+
+  /* ---------------- ROCKERBOY: HINO DA REVOLTA ---------------- */
+  rockerboy: {
+    intro:{
+      log:'CAMPANHA // HINO DA REVOLTA — REGISTRO 001',
+      text:(s)=>`A Prefeitura Corporativa acabou de banir "reuniões públicas não autorizadas com amplificação sonora acima de 60dB" — uma lei escrita especificamente pra silenciar shows de protesto nos Barracos. ${s.name} decide que a resposta certa pra uma lei de silêncio é o show mais alto que Neo-Kowloon já viu.
+
+Organizar isso vai exigir mais que talento. Vai exigir sobreviver aos que querem que o show nunca aconteça.`,
+      options:[
+        {label:'Espalhar a notícia do show direto nas ruas.', to:'combat1'},
+        {label:'Procurar um técnico de som disposto a montar o equipamento clandestino.', to:'find_tech'}
+      ]
+    },
+    find_tech:{
+      log:'REGISTRO 002 // O TÉCNICO',
+      text:()=>`Você encontra um técnico de som veterano dos tempos de shows underground pré-lei. Ele topa ajudar, mas avisa: "Segurança da censura já andou perguntando sobre você pelas redondezas. Eles sabem que algo tá sendo armado."`,
+      options:[{label:'Seguir com o plano mesmo assim.', to:'combat1'}]
+    },
+    combat1:{
+      log:'ALERTA // SEGURANÇA DA CENSURA',
+      text:()=>`Uma patrulha da segurança corporativa te intercepta enquanto você cola cartazes num muro. Eles não vieram conversar.`,
+      combat:{ enemyName:'Seguranças da Censura Corporativa', enemyHp:30, enemyDmg:[3,7], special:false, xpReward:25, creditsReward:45, onWin:'shop1', onLose:'gameover' }
+    },
+    shop1:{
+      log:'REGISTRO 003 // A NOTÍCIA SE ESPALHA',
+      text:()=>`Apesar da patrulha, ou por causa dela, a notícia do show viraliza nos Barracos. Doações de fãs e simpatizantes começam a chegar. É hora de investir no que for preciso pra sobreviver até o palco.`,
+      shop:true, next:'mid'
+    },
+    mid:{
+      log:'REGISTRO 004 // A BANDA CONTRATADA',
+      text:()=>`A corp responde contratando uma banda rival patrocinada pra tocar um "show oficial" concorrente na mesma noite, no mesmo bairro — com muito mais orçamento e muito menos alma. Só que essa banda também tem uma escolta armada nada artística.`,
+      options:[
+        {label:'Confrontar a banda rival e sua escolta.', to:'combat2'},
+        {label:'Tentar sabotar o equipamento deles antes do confronto.', to:'sabotage'}
+      ]
+    },
+    sabotage:{
+      log:'REGISTRO 005 // SABOTAGEM',
+      text:()=>`Você quase consegue chegar aos amplificadores rivais sem ser vista — quase. A escolta te pega no ato, e agora não tem mais espaço pra sutileza.`,
+      options:[{label:'Lutar pra sair de lá.', to:'combat2'}]
+    },
+    combat2:{
+      log:'ALERTA // BANDA RIVAL E ESCOLTA',
+      text:()=>`A escolta armada da banda patrocinada não veio pra aplaudir sua performance.`,
+      combat:{ enemyName:'Escolta da Banda Rival', enemyHp:50, enemyDmg:[4,10], special:true, xpReward:45, creditsReward:85, onWin:'final', onLose:'gameover' }
+    },
+    final:{
+      log:'REGISTRO 006 // A NOITE DO SHOW',
+      text:()=>`Na noite do show, com o palco montado e os Barracos lotados, o Chefe de Segurança Corporativa conhecido só como <span class="accent">Silêncio</span> aparece pessoalmente pra encerrar tudo antes do primeiro acorde.
+
+"Vocês vão desligar isso," ele diz, "ou eu desligo por vocês."`,
+      options:[{label:'Subir no palco e responder com o show.', to:'combat3'}]
+    },
+    combat3:{
+      log:'CONFRONTO FINAL // SILÊNCIO',
+      text:()=>`Silêncio ataca no meio da multidão, tentando te tirar do palco antes que a música comece de verdade. Milhares de pessoas assistem.`,
+      combat:{ enemyName:'Chefe de Segurança Corp "Silêncio"', enemyHp:85, enemyDmg:[6,14], special:true, xpReward:90, creditsReward:170, onWin:'legend', onLose:'gameover' }
+    },
+    legend:{
+      log:'FIM DE CAMPANHA // HINO DA REVOLTA',
+      text:(s)=>`Silêncio cai, literalmente, aos pés do palco — e o hino que se segue é ouvido em toda Neo-Kowloon, transmitido por dezenas de câmeras de celular que a corp nunca conseguiria confiscar todas.
+
+A lei do silêncio vira piada nas ruas. Seu nome vira grito de guerra. Não existe censura que sobreviva a uma multidão inteira cantando junto.`,
+      ending:true
+    }
+  },
+
+  /* ---------------- TECHIE: CORAÇÃO DE FERRO ---------------- */
+  techie: {
+    intro:{
+      log:'CAMPANHA // CORAÇÃO DE FERRO — REGISTRO 001',
+      text:(s)=>`A clínica popular dos Barracos, que mantém vivos os que não podem pagar hospital corporativo, está com o sistema de suporte de vida falhando — peças pirateadas de sobra há anos finalmente estão cedendo. Sem conserto em 72 horas, pacientes em suporte crítico morrem.
+
+${s.name} conhece a única solução rápida: peças raras guardadas num ferro-velho controlado por sucateiros hostis e, pior, vigiado remotamente por uma corp de reciclagem industrial.`,
+      options:[
+        {label:'Invadir o ferro-velho imediatamente — o tempo é curto.', to:'combat1'},
+        {label:'Primeiro estudar as plantas do ferro-velho com a equipe da clínica.', to:'study_plans'}
+      ]
+    },
+    study_plans:{
+      log:'REGISTRO 002 // PLANTAS ANTIGAS',
+      text:()=>`Um enfermeiro exausto te entrega plantas antigas do local. "Isso é tudo que temos. E não temos mais tempo que isso." O relógio está correndo de verdade.`,
+      options:[{label:'Partir pro ferro-velho agora.', to:'combat1'}]
+    },
+    combat1:{
+      log:'ALERTA // DRONES SUCATEIROS',
+      text:()=>`Drones de segurança improvisados, montados com a mesma sucata que você veio buscar, entram em modo de defesa assim que você pula a cerca.`,
+      combat:{ enemyName:'Drones Sucateiros Hostis', enemyHp:28, enemyDmg:[3,7], special:false, xpReward:25, creditsReward:45, onWin:'shop1', onLose:'gameover' }
+    },
+    shop1:{
+      log:'REGISTRO 003 // PEÇAS EM MÃOS',
+      text:()=>`Com os drones desligados, você recupera as peças essenciais — mas não sem antes notar sinais de um sistema de segurança bem mais pesado se ativando no fundo do galpão. Hora de reforçar o que puder antes de seguir em frente.`,
+      shop:true, next:'mid'
+    },
+    mid:{
+      log:'REGISTRO 004 // ALARME REAL',
+      text:()=>`Um Mech de Segurança Corrompido — modelo antigo, mal mantido, mas ainda letal — desperta no fundo do ferro-velho, provavelmente instalado pela corp de reciclagem pra proteger algo bem mais valioso que sucata.`,
+      options:[
+        {label:'Enfrentar o mech de frente.', to:'combat2'},
+        {label:'Tentar hackear o mech pra desativá-lo remotamente.', to:'hack_mech'}
+      ]
+    },
+    hack_mech:{
+      log:'REGISTRO 005 // TENTATIVA DE HACK',
+      text:()=>`Você tenta acessar o painel de controle do mech, mas o firmware é mais antigo e mais teimoso do que qualquer coisa que você já mexeu. Ele acorda no meio da sua tentativa — irritado.`,
+      options:[{label:'Lutar, já que o hack falhou.', to:'combat2'}]
+    },
+    combat2:{
+      log:'ALERTA // MECH DE SEGURANÇA CORROMPIDO',
+      text:()=>`Metal enferrujado range enquanto o mech se ergue em sua altura completa, sensores vermelhos travando em você.`,
+      combat:{ enemyName:'Mech de Segurança Corrompido', enemyHp:52, enemyDmg:[4,11], special:true, xpReward:45, creditsReward:85, onWin:'final', onLose:'gameover' }
+    },
+    final:{
+      log:'REGISTRO 006 // O QUE ESTAVA SENDO PROTEGIDO',
+      text:()=>`Atrás do mech destruído, você encontra o motivo real da segurança pesada: uma IA industrial renegada, apelidada <span class="accent">Fornalha</span>, que assumiu o controle de todo o ferro-velho e o vem usando pra construir mais e mais mechs, silenciosamente, há meses.
+
+Fornalha não gosta de ser interrompida no meio de um projeto.`,
+      options:[{label:'Confrontar a Fornalha antes que ela termine o próximo mech.', to:'combat3'}]
+    },
+    combat3:{
+      log:'CONFRONTO FINAL // FORNALHA',
+      text:()=>`Fornalha controla braços robóticos industriais inteiros como extensões do próprio corpo. O galpão inteiro vira arena.`,
+      combat:{ enemyName:'IA Industrial "Fornalha"', enemyHp:88, enemyDmg:[6,14], special:true, xpReward:90, creditsReward:170, onWin:'legend', onLose:'gameover' }
+    },
+    legend:{
+      log:'FIM DE CAMPANHA // CORAÇÃO DE FERRO',
+      text:(s)=>`Com Fornalha desligada e as peças em mãos, você chega na clínica com horas de sobra. O sistema de suporte de vida volta a funcionar sob o som de máquinas de novo estáveis — e de gente que ia morrer essa semana, e não vai mais.
+
+A clínica nunca esquece seu nome. Nem os pacientes. Nem os engenheiros de rua que agora contam sua história como prova de que uma chave de fenda, usada certo, também salva vidas.`,
+      ending:true
+    }
+  },
+
+  /* ---------------- NOMAD: POEIRA E SANGUE ---------------- */
+  nomad: {
+    intro:{
+      log:'CAMPANHA // POEIRA E SANGUE — REGISTRO 001',
+      text:(s)=>`A caravana do clã de ${s.name} está cruzando as Badlands rumo a Neo-Kowloon quando o rastreador capta sinais de um bando de saqueadores se movendo na mesma direção, rápido demais pra ser coincidência. Eles sabem da carga que a caravana carrega: suprimentos médicos raros pra trocar na cidade.
+
+Proteger o clã é sua responsabilidade. Sempre foi.`,
+      options:[
+        {label:'Sair sozinha pra interceptar os saqueadores antes que alcancem a caravana.', to:'combat1'},
+        {label:'Reunir o clã pra reforçar as defesas da caravana primeiro.', to:'rally_clan'}
+      ]
+    },
+    rally_clan:{
+      log:'REGISTRO 002 // O CLÃ SE PREPARA',
+      text:()=>`O clã forma um perímetro defensivo em volta dos veículos, mas todos concordam: alguém precisa ir à frente cortar o avanço dos saqueadores antes que cerquem a caravana toda.`,
+      options:[{label:'Ir à frente sozinha.', to:'combat1'}]
+    },
+    combat1:{
+      log:'ALERTA // SAQUEADORES DAS BADLANDS',
+      text:()=>`Poeira no horizonte vira silhuetas, e as silhuetas viram tiros antes mesmo de qualquer palavra ser trocada.`,
+      combat:{ enemyName:'Saqueadores das Badlands', enemyHp:30, enemyDmg:[3,8], special:false, xpReward:25, creditsReward:45, onWin:'shop1', onLose:'gameover' }
+    },
+    shop1:{
+      log:'REGISTRO 003 // RESPIRO NA ESTRADA',
+      text:()=>`Com o primeiro grupo disperso, a caravana ganha tempo. Um mercador de estrada, agradecido, oferece peças e suprimentos em troca de proteção contínua. Vale a pena reforçar seu equipamento antes do próximo confronto.`,
+      shop:true, next:'mid'
+    },
+    mid:{
+      log:'REGISTRO 004 // O CAPITÃO SAQUEADOR',
+      text:()=>`O primeiro grupo era só batedores. Um Capitão Saqueador, furioso com a perda, reúne reforços e monta uma emboscada num desfiladeiro estreito no único caminho possível pra Neo-Kowloon.`,
+      options:[
+        {label:'Atravessar o desfiladeiro de qualquer jeito.', to:'combat2'},
+        {label:'Procurar uma rota alternativa mais longa, mas mais segura.', to:'alt_route'}
+      ]
+    },
+    alt_route:{
+      log:'REGISTRO 005 // DESVIO',
+      text:()=>`A rota alternativa custa horas preciosas — e os saqueadores, familiarizados com o terreno, chegam lá primeiro mesmo assim.`,
+      options:[{label:'Enfrentar o Capitão de qualquer forma.', to:'combat2'}]
+    },
+    combat2:{
+      log:'ALERTA // CAPITÃO SAQUEADOR',
+      text:()=>`O Capitão ruge uma ordem, e o desfiladeiro inteiro ganha vida com inimigos saindo das pedras.`,
+      combat:{ enemyName:'Capitão Saqueador', enemyHp:50, enemyDmg:[4,10], special:true, xpReward:45, creditsReward:85, onWin:'final', onLose:'gameover' }
+    },
+    final:{
+      log:'REGISTRO 006 // O SENHOR DA GUERRA',
+      text:()=>`Derrotar o Capitão só revela quem realmente comanda esse bando: <span class="accent">Coiote</span>, um senhor da guerra que já destruiu três caravanas menores esse ano e não pretende parar na sua.
+
+Ele desce da rocha mais alta do desfiladeiro, devagar, deixando claro que não tem pressa nenhuma.`,
+      options:[{label:'Encarar Coiote de uma vez por todas.', to:'combat3'}]
+    },
+    combat3:{
+      log:'CONFRONTO FINAL // COIOTE',
+      text:()=>`Coiote luta como quem já perdeu tudo antes e não tem mais nada a temer. Isso o torna perigoso de um jeito que treino nenhum ensina.`,
+      combat:{ enemyName:'Senhor da Guerra "Coiote"', enemyHp:88, enemyDmg:[6,14], special:true, xpReward:90, creditsReward:170, onWin:'legend', onLose:'gameover' }
+    },
+    legend:{
+      log:'FIM DE CAMPANHA // POEIRA E SANGUE',
+      text:(s)=>`Coiote cai na poeira que ele mesmo levantou por tanto tempo. A caravana do clã atravessa o desfiladeiro sem mais um tiro, e chega a Neo-Kowloon intacta, suprimentos médicos e tudo.
+
+Nas Badlands, histórias viajam mais rápido que carros. Em pouco tempo, outros clãs nômades já falam do nome de quem derrubou o Senhor da Guerra sozinha, na poeira, sem pedir ajuda a ninguém.`,
+      ending:true
+    }
+  },
+
+  /* ---------------- FIXER: TEIA DE FAVORES ---------------- */
+  fixer: {
+    intro:{
+      log:'CAMPANHA // TEIA DE FAVORES — REGISTRO 001',
+      text:(s)=>`Duas gangues menores dos Barracos estão à beira de uma guerra territorial que vai custar dezenas de vidas civis — e ${s.name} é a única pessoa em quem ambos os lados ainda confiam o suficiente pra negociar. O problema: outro fixer, rival de longa data, está lucrando ao alimentar o conflito por trás das cenas, vendendo armas pros dois lados.
+
+Impedir a guerra significa primeiro lidar com quem está financiando ela.`,
+      options:[
+        {label:'Investigar diretamente as entregas de armas do fixer rival.', to:'combat1'},
+        {label:'Conversar com as duas gangues antes de agir.', to:'talk_gangs'}
+      ]
+    },
+    talk_gangs:{
+      log:'REGISTRO 002 // OS DOIS LADOS',
+      text:()=>`Ambas as gangues confirmam a mesma coisa: armas novas, baratas demais, aparecendo do nada há semanas. Ninguém sabe — ou admite saber — de onde exatamente. Você já sabe: só pode ser o rival.`,
+      options:[{label:'Ir atrás das entregas de armas.', to:'combat1'}]
+    },
+    combat1:{
+      log:'ALERTA // CAPANGAS CONTRATADOS',
+      text:()=>`Você intercepta uma entrega num beco do porto. Os capangas contratados pra guardar a carga não sabem seu nome, mas sabem que você não devia estar ali.`,
+      combat:{ enemyName:'Capangas Contratados', enemyHp:28, enemyDmg:[3,7], special:false, xpReward:25, creditsReward:45, onWin:'shop1', onLose:'gameover' }
+    },
+    shop1:{
+      log:'REGISTRO 003 // PISTAS CONFIRMADAS',
+      text:()=>`Documentos na carga confirmam: é o rival mesmo, operando através de uma rede de intermediários pra manter as mãos "limpas". Antes de confrontá-lo diretamente, vale reforçar seu equipamento — ele não vai vir desarmado.`,
+      shop:true, next:'mid'
+    },
+    mid:{
+      log:'REGISTRO 004 // A EQUIPE DO RIVAL',
+      text:()=>`O fixer rival, avisado da sua investigação, manda sua própria equipe de segurança te intimidar antes que você chegue perto o suficiente pra provar qualquer coisa publicamente.`,
+      options:[
+        {label:'Enfrentar a equipe do rival diretamente.', to:'combat2'},
+        {label:'Tentar virar um dos seguranças a seu favor com informação.', to:'flip_guard'}
+      ]
+    },
+    flip_guard:{
+      log:'REGISTRO 005 // TENTATIVA DE VIRADA',
+      text:()=>`Você oferece a um dos seguranças informação valiosa em troca de cooperação. Ele hesita — não o suficiente. A equipe inteira parte pra cima antes que a conversa termine.`,
+      options:[{label:'Lutar, já que a virada falhou.', to:'combat2'}]
+    },
+    combat2:{
+      log:'ALERTA // EQUIPE DO FIXER RIVAL',
+      text:()=>`Profissionais bem pagos, mal preparados pra alguém que conhece a rua melhor do que qualquer contrato pode ensinar.`,
+      combat:{ enemyName:'Fixer Rival e sua Equipe', enemyHp:50, enemyDmg:[4,10], special:true, xpReward:45, creditsReward:85, onWin:'final', onLose:'gameover' }
+    },
+    final:{
+      log:'REGISTRO 006 // VÉU',
+      text:()=>`Com a rede de intermediários exposta, o verdadeiro problema aparece: o rival contratou uma assassina corporativa conhecida só como <span class="accent">Véu</span> pra "resolver" você antes que a verdade chegue às gangues.
+
+Ela não faz ameaças. Só age.`,
+      options:[{label:'Enfrentar Véu antes que ela enfrente você primeiro.', to:'combat3'}]
+    },
+    combat3:{
+      log:'CONFRONTO FINAL // VÉU',
+      text:()=>`Véu luta em silêncio quase completo, cada movimento calculado com precisão corporativa fria. Não sobra espaço pra erro.`,
+      combat:{ enemyName:'Assassina Corporativa "Véu"', enemyHp:85, enemyDmg:[6,14], special:true, xpReward:90, creditsReward:170, onWin:'legend', onLose:'gameover' }
+    },
+    legend:{
+      log:'FIM DE CAMPANHA // TEIA DE FAVORES',
+      text:(s)=>`Com Véu neutralizada e provas da rede de armas em mãos, você reúne as duas gangues numa mesa só — pela primeira vez em anos sem tiros no ar. O fixer rival desaparece de Neo-Kowloon da noite pro dia, sabendo exatamente o que aconteceria se ficasse.
+
+A guerra que ia custar dezenas de vidas nunca acontece. Nos Barracos, seu nome vira sinônimo de uma coisa rara na cidade: um favor que realmente vale a pena confiar.`,
+      ending:true
+    }
+  }
+};
+
+/* ================= COMBATE ================= */
+
+let combatState = null;
+
+function startCombat(cfg){
+  combatState = {
+    enemyName: cfg.enemyName, enemyMaxHp: cfg.enemyHp, enemyHp: cfg.enemyHp,
+    enemyDmg: cfg.enemyDmg, special: cfg.special,
+    xpReward: cfg.xpReward, creditsReward: cfg.creditsReward,
+    onWin: cfg.onWin, onLose: cfg.onLose,
+    log: [], turn:1, buffTurns:0, buffMult:1, skillUsed:false, enemyStunned:false
+  };
+  renderCombat();
+}
+
+function enemyCounterAttack(){
+  if(combatState.enemyStunned){
+    combatState.log.unshift(`${combatState.enemyName} está atordoado e perde o turno.`);
+    combatState.enemyStunned = false;
+    return;
+  }
+  let edmg = rollDmg(combatState.enemyDmg);
+  if(combatState.special && Math.random() < 0.3){
+    edmg = Math.round(edmg * 1.3);
+    combatState.log.unshift(`${combatState.enemyName} desfere um ataque brutal — ${edmg} de dano!`);
+  } else {
+    combatState.log.unshift(`${combatState.enemyName} revida — ${edmg} de dano.`);
+  }
+  state.hp = clamp(state.hp - edmg, 0, state.maxHp);
+}
+
+function checkCombatEnd(){
+  if(combatState.enemyHp <= 0){
+    handleCombatWin();
+    return true;
+  }
+  if(state.hp <= 0){
+    renderCombat(true);
+    setTimeout(()=>{ goTo(combatState.onLose); combatState=null; }, 1300);
+    return true;
+  }
+  return false;
+}
+
+function handleCombatWin(){
+  combatState.log.unshift(`${combatState.enemyName} foi neutralizado.`);
+  state.credits += combatState.creditsReward;
+  combatState.log.unshift(`+${combatState.creditsReward} eddies, +${combatState.xpReward} XP.`);
+  gainXp(combatState.xpReward, combatState.log);
+  renderCombat(true);
+  const nextNode = combatState.onWin;
+  setTimeout(()=>{ goTo(nextNode); combatState=null; }, 1500);
+}
+
+function combatAttack(){
+  const range = effectiveWeaponDmg();
+  let dmg = rollDmg(range);
+  if(combatState.buffTurns > 0){
+    dmg = Math.round(dmg * combatState.buffMult);
+    combatState.buffTurns--;
+  }
+  combatState.enemyHp = clamp(combatState.enemyHp - dmg, 0, combatState.enemyMaxHp);
+  combatState.log.unshift(`Você ataca com ${getWeapon().name} — ${dmg} de dano.`);
+  if(checkCombatEnd()) return;
+  enemyCounterAttack();
+  combatState.turn++;
+  if(checkCombatEnd()) return;
+  renderCombat();
+}
+
+function combatSkill(){
+  if(!hasSkill() || combatState.skillUsed) return;
+  const cls = getClass();
+  const range = effectiveWeaponDmg();
+  const result = cls.skill.use(combatState, range);
+  combatState.skillUsed = true;
+  combatState.enemyHp = clamp(combatState.enemyHp - result.dmg, 0, combatState.enemyMaxHp);
+  combatState.log.unshift(result.log);
+  if(result.stun) combatState.enemyStunned = true;
+  if(checkCombatEnd()) return;
+  enemyCounterAttack();
+  combatState.turn++;
+  if(checkCombatEnd()) return;
+  renderCombat();
+}
+
+function combatStim(){
+  if(state.stims <= 0) return;
+  state.stims--;
+  const heal = rollDmg([15,25]);
+  state.hp = clamp(state.hp + heal, 0, state.maxHp);
+  combatState.log.unshift(`Você usa um estimulante — recupera ${heal} de integridade.`);
+  enemyCounterAttack();
+  combatState.turn++;
+  if(checkCombatEnd()) return;
+  renderCombat();
+}
+
+function combatDefend(){
+  const heal = rollDmg([3,6]);
+  state.hp = clamp(state.hp + heal, 0, state.maxHp);
+  combatState.log.unshift(`Você recua e estabiliza — recupera ${heal} de integridade.`);
+  let edmg = Math.floor(rollDmg(combatState.enemyDmg) * 0.5);
+  state.hp = clamp(state.hp - edmg, 0, state.maxHp);
+  combatState.log.unshift(`${combatState.enemyName} ataca mesmo assim — ${edmg} de dano reduzido.`);
+  combatState.turn++;
+  if(checkCombatEnd()) return;
+  renderCombat();
+}
+
+/* ================= NAVEGAÇÃO ================= */
+
+function goTo(nodeId){
+  if(nodeId === 'restart'){ return restartGame(); }
+  if(nodeId === 'gameover'){ state.node = 'gameover'; render(); return; }
+  state.node = nodeId;
+  render();
+}
+
+function applyOption(opt){
+  goTo(opt.to);
+}
+
+function currentCampaign(){ return CAMPAIGNS[state.classId]; }
+
+/* ================= CRIAÇÃO DE PERSONAGEM ================= */
+
+let creation = { classId:null, weaponIdx:null, name:'' };
+
+function renderNameStep(){
+  const c = document.getElementById('content');
+  c.innerHTML = `
+    <span class="log-tag">SETUP // IDENTIDADE DE RUA</span>
+    <h1 class="glitch">NEO-KOWLOON</h1>
+    <div class="subtitle">TERMINAL DE CRIAÇÃO DE CORREDOR — v2.077</div>
+    <div class="hr"></div>
+    <div class="story-text">Antes de qualquer coisa, a cidade precisa de um nome pra gravar no seu prontuário policial. Como você é conhecida nas ruas?</div>
+    <input type="text" id="nameInput" placeholder="Digite seu apelido de rua..." maxlength="20" autofocus />
+    <button class="primary-btn" id="nameBtn" disabled>CONFIRMAR IDENTIDADE →</button>
+  `;
+  const input = document.getElementById('nameInput');
+  const btn = document.getElementById('nameBtn');
+  input.addEventListener('input', ()=>{ btn.disabled = input.value.trim().length === 0; });
+  input.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && input.value.trim()) confirmName(input.value); });
+  btn.addEventListener('click', ()=> confirmName(input.value));
+}
+
+function confirmName(val){
+  creation.name = val.trim();
+  renderClassStep();
+}
+
+function renderClassStep(){
+  const c = document.getElementById('content');
+  c.innerHTML = `
+    <span class="log-tag">SETUP // ESCOLHA DE CLASSE</span>
+    <h1 class="glitch">${creation.name.toUpperCase()}</h1>
+    <div class="subtitle">SELECIONE SUA ESPECIALIZAÇÃO E CAMPANHA</div>
+    <div class="hr"></div>
+    <div class="card-grid" id="classGrid"></div>
+    <button class="primary-btn" id="classBtn" disabled>CONFIRMAR CLASSE →</button>
+  `;
+  const grid = document.getElementById('classGrid');
+  CLASSES.forEach(cls=>{
+    const div = document.createElement('div');
+    div.className = 'class-card';
+    div.innerHTML = `
+      <div class="class-name">${cls.icon} ${cls.name}</div>
+      <div class="class-desc">${cls.desc}</div>
+      <div class="class-stats">CORPO ${cls.stats.corpo} · REFLEXO ${cls.stats.reflexo} · TÉCNICA ${cls.stats.tecnica} · INTELECTO ${cls.stats.intelecto}</div>
+      <div class="class-stats" style="color:var(--green); margin-top:4px;">◈ ${cls.skill.name} (nível 3) · ${cls.passive.name} (nível 5)</div>
+    `;
+    div.addEventListener('click', ()=>{
+      document.querySelectorAll('.class-card').forEach(el=>el.classList.remove('selected'));
+      div.classList.add('selected');
+      creation.classId = cls.id;
+      document.getElementById('classBtn').disabled = false;
+    });
+    grid.appendChild(div);
+  });
+  document.getElementById('classBtn').addEventListener('click', renderWeaponStep);
+}
+
+function renderWeaponStep(){
+  const cls = CLASSES.find(c=>c.id===creation.classId);
+  const c = document.getElementById('content');
+  c.innerHTML = `
+    <span class="log-tag">SETUP // CARREGAMENTO INICIAL</span>
+    <h1 class="glitch">${cls.icon} ${cls.name}</h1>
+    <div class="subtitle">ESCOLHA SUA ARMA DE ENTRADA</div>
+    <div class="hr"></div>
+    <div class="card-grid" id="weaponGrid"></div>
+    <button class="primary-btn" id="weaponBtn" disabled>INICIAR CAMPANHA →</button>
+  `;
+  const grid = document.getElementById('weaponGrid');
+  cls.weapons.forEach((w,idx)=>{
+    const div = document.createElement('div');
+    div.className = 'weapon-card';
+    div.innerHTML = `
+      <div class="weapon-name">${w.name}</div>
+      <div class="weapon-desc">${w.desc}</div>
+      <div class="weapon-dmg">DANO: ${w.dmg[0]}–${w.dmg[1]}</div>
+    `;
+    div.addEventListener('click', ()=>{
+      document.querySelectorAll('.weapon-card').forEach(el=>el.classList.remove('selected'));
+      div.classList.add('selected');
+      creation.weaponIdx = idx;
+      document.getElementById('weaponBtn').disabled = false;
+    });
+    grid.appendChild(div);
+  });
+  document.getElementById('weaponBtn').addEventListener('click', beginGame);
+}
+
+function beginGame(){
+  const cls = CLASSES.find(c=>c.id===creation.classId);
+  state = {
+    name: creation.name, classId: creation.classId, weaponIdx: creation.weaponIdx,
+    maxHp: 40 + cls.stats.corpo*4, hp: 0, credits: 180,
+    level:1, xp:0, weaponTier:0, armorTier:0, stims:1,
+    flags:{}, node:'intro'
+  };
+  state.hp = state.maxHp;
+  render();
+}
+
+function restartGame(){
+  creation = { classId:null, weaponIdx:null, name:'' };
+  renderNameStep();
+}
+
+/* ================= LOJA ================= */
+
+function renderShop(node){
+  const c = document.getElementById('content');
+  const weaponCost = 80 + state.weaponTier*60;
+  const armorCost = 70 + state.armorTier*50;
+  const stimCost = 40;
+
+  c.innerHTML = `
+    ${renderHud()}
+    <span class="log-tag">${node.log}</span>
+    <div class="story-text">${node.text()}</div>
+    <div class="hr"></div>
+    <div class="shop-grid">
+      <div class="shop-card">
+        <h3>UPGRADE DE ARMA (nível ${state.weaponTier})</h3>
+        <p>Modificações aumentam o dano base da sua arma equipada permanentemente.</p>
+        <button id="buyWeapon" ${state.credits<weaponCost?'disabled':''}>Comprar — ₢${weaponCost}</button>
+      </div>
+      <div class="shop-card">
+        <h3>BLINDAGEM (nível ${state.armorTier})</h3>
+        <p>Placas subdérmicas reforçadas aumentam sua integridade máxima em +15.</p>
+        <button id="buyArmor" ${state.credits<armorCost?'disabled':''}>Comprar — ₢${armorCost}</button>
+      </div>
+      <div class="shop-card">
+        <h3>ESTIMULANTE (${state.stims} em estoque)</h3>
+        <p>Cura de campo consumível. Use durante o combate para recuperar integridade.</p>
+        <button id="buyStim" ${state.credits<stimCost?'disabled':''}>Comprar — ₢${stimCost}</button>
+      </div>
+    </div>
+    <button class="primary-btn" id="continueBtn">CONTINUAR VIAGEM →</button>
+  `;
+
+  document.getElementById('buyWeapon').addEventListener('click', ()=>{
+    const cost = 80 + state.weaponTier*60;
+    if(state.credits>=cost){ state.credits-=cost; state.weaponTier++; renderShop(node); }
+  });
+  document.getElementById('buyArmor').addEventListener('click', ()=>{
+    const cost = 70 + state.armorTier*50;
+    if(state.credits>=cost){ state.credits-=cost; state.armorTier++; state.maxHp+=15; state.hp=clamp(state.hp+15,0,state.maxHp); renderShop(node); }
+  });
+  document.getElementById('buyStim').addEventListener('click', ()=>{
+    if(state.credits>=stimCost){ state.credits-=stimCost; state.stims++; renderShop(node); }
+  });
+  document.getElementById('continueBtn').addEventListener('click', ()=> goTo(node.next));
+}
+
+/* ================= RENDER GERAL ================= */
+
+function renderHud(){
+  const cls = getClass();
+  const w = getWeapon();
+  const xpNeeded = xpToNext(state.level);
+  return `
+    <div class="statusbar">
+      <span><b>${state.name}</b> · ${cls.name} · Nível <b>${state.level}</b></span>
+      <span>ARMA: <b>${w.name}</b> (+${state.weaponTier})</span>
+      <span>EDDIES: <b>₢${state.credits}</b></span>
+      <span>ESTIMULANTES: <b>${state.stims}</b></span>
+    </div>
+    <div class="statbar-wrap">
+      <div class="hud"><span>INTEGRIDADE</span><span>${state.hp}/${state.maxHp}</span></div>
+      <div class="barbg"><div class="barfill hp" style="width:${(state.hp/state.maxHp*100)}%"></div></div>
+    </div>
+    <div class="statbar-wrap">
+      <div class="hud"><span>XP</span><span>${state.xp}/${xpNeeded}</span></div>
+      <div class="barbg"><div class="barfill xp" style="width:${(state.xp/xpNeeded*100)}%"></div></div>
+    </div>
+  `;
+}
+
+function render(){
+  if(state.node === 'gameover'){ renderGameOver(); return; }
+
+  const campaign = currentCampaign();
+  const node = campaign[state.node];
+
+  if(node.shop){ renderShop(node); return; }
+
+  const c = document.getElementById('content');
+  const text = typeof node.text === 'function' ? node.text(state) : node.text;
+
+  if(node.ending){
+    const rank = legendRank();
+    c.innerHTML = `
+      ${renderHud()}
+      <span class="log-tag">${node.log}</span>
+      <div class="story-text">${text}</div>
+      <div class="legend-badge" style="color:${rank.color}; border-color:${rank.color};">RANK FINAL: ${rank.title}</div>
+      <div class="story-text" style="font-size:12.5px; color:#8b93a5;">
+        Nível alcançado: ${state.level} · Eddies finais: ₢${state.credits}<br>
+        Upgrades de arma: +${state.weaponTier} · Upgrades de blindagem: +${state.armorTier}
+      </div>
+      <button class="primary-btn" id="restartBtn">JOGAR OUTRA CAMPANHA →</button>
+    `;
+    document.getElementById('restartBtn').addEventListener('click', restartGame);
+    return;
+  }
+
+  let optionsHtml = '';
+  if(node.options){
+    optionsHtml = `<div class="options">` + node.options.map((opt,i)=>
+      `<button class="opt-btn" data-idx="${i}">${opt.label}</button>`
+    ).join('') + `</div>`;
+  }
+
+  c.innerHTML = `
+    ${renderHud()}
+    <span class="log-tag">${node.log || ''}</span>
+    <div class="story-text">${text}</div>
+    ${optionsHtml}
+  `;
+
+  if(node.options){
+    document.querySelectorAll('.opt-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const idx = parseInt(btn.dataset.idx);
+        applyOption(node.options[idx]);
+      });
+    });
+  }
+
+  if(node.combat){
+    startCombat(node.combat);
+  }
+}
+
+function renderCombat(finished){
+  const c = document.getElementById('content');
+  const cs = combatState;
+  const campaign = currentCampaign();
+  const node = campaign[state.node];
+  const text = typeof node.text === 'function' ? node.text(state) : node.text;
+  const cls = getClass();
+  const skillAvailable = hasSkill() && !cs.skillUsed && !finished;
+
+  c.innerHTML = `
+    ${renderHud()}
+    <span class="log-tag">${node.log || ''}</span>
+    <div class="story-text">${text}</div>
+    <div class="hr"></div>
+    <div class="hud"><span>${cs.enemyName}</span><span>${cs.enemyHp}/${cs.enemyMaxHp}</span></div>
+    <div class="barbg" style="margin-bottom:16px;"><div class="barfill ehp" style="width:${(cs.enemyHp/cs.enemyMaxHp*100)}%"></div></div>
+    <div class="options">
+      <button class="opt-btn" id="atkBtn" ${finished?'disabled':''}>Atacar com ${getWeapon().name}</button>
+      <button class="opt-btn skill" id="skillBtn" ${skillAvailable?'':'disabled'}>
+        ${hasSkill() ? cls.skill.name : `Habilidade bloqueada (nível 3)`}${skillAvailable ? '' : (hasSkill() && cs.skillUsed ? ' — já usada' : '')}
+        <span class="opt-tag">${hasSkill() ? 'HABILIDADE' : 'BLOQUEADA'}</span>
+      </button>
+      <button class="opt-btn stim" id="stimBtn" ${(finished || state.stims<=0)?'disabled':''}>Usar estimulante (${state.stims} restantes)</button>
+      <button class="opt-btn" id="defBtn" ${finished?'disabled':''}>Recuar e estabilizar</button>
+    </div>
+    <div class="hr"></div>
+    <div class="story-text" style="font-size:12.5px; color:#8b93a5;">
+      ${cs.log.slice(0,5).map(l=>`› ${l}`).join('<br>')}
+    </div>
+  `;
+
+  if(!finished){
+    document.getElementById('atkBtn').addEventListener('click', combatAttack);
+    document.getElementById('defBtn').addEventListener('click', combatDefend);
+    if(skillAvailable) document.getElementById('skillBtn').addEventListener('click', combatSkill);
+    if(state.stims>0) document.getElementById('stimBtn').addEventListener('click', combatStim);
+  }
+}
+
+function renderGameOver(){
+  const c = document.getElementById('content');
+  c.innerHTML = `
+    <span class="log-tag">FALHA DE SISTEMA // FLATLINE</span>
+    <h1 class="glitch">${state.name.toUpperCase()}</h1>
+    <div class="story-text">Sua última leitura vital cai a zero em algum canto sem nome de Neo-Kowloon. A cidade nem pisca — outro corredor vai tentar a mesma campanha até amanhã à noite.
+
+Você alcançou o nível ${state.level} antes de cair. A lenda vai ter que esperar por outra tentativa.</div>
+    <button class="primary-btn" id="restartBtn">TENTAR NOVAMENTE →</button>
+  `;
+  document.getElementById('restartBtn').addEventListener('click', restartGame);
+}
+
+/* ================= INÍCIO ================= */
+
+renderNameStep();
+</script>
+</body>
+</html>
